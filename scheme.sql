@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS public.relation_types
 (
     id serial,
     relation_type character varying(64) NOT NULL,
+    relation_priority integer NOT NULL,
     PRIMARY KEY (id),
     UNIQUE (relation_type)
 );
