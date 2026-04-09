@@ -1,141 +1,112 @@
-DROP TABLE IF EXISTS public.will_entries;
-DROP TABLE IF EXISTS public.wills;
-DROP TABLE IF EXISTS public.properties;
-DROP TABLE IF EXISTS public.relations;
-DROP TABLE IF EXISTS public.people;
-DROP TABLE IF EXISTS public.relation_types;
-DROP TABLE IF EXISTS public.countries;
+-- Удаление таблиц (в порядке, обратном зависимостям)
+DROP TABLE IF EXISTS will_entries;
+DROP TABLE IF EXISTS wills;
+DROP TABLE IF EXISTS properties;
+DROP TABLE IF EXISTS relations;
+DROP TABLE IF EXISTS people;
+DROP TABLE IF EXISTS relation_types;
+DROP TABLE IF EXISTS countries;
 
-CREATE TABLE IF NOT EXISTS public.people
+-- Таблица стран
+CREATE TABLE countries
 (
-    id serial,
-    surname character varying(32) NOT NULL,
-    name character varying(32) NOT NULL,
-    fathers_name character varying(32),
-    citizenship integer NOT NULL,
-    PRIMARY KEY (id)
+  id   serial PRIMARY KEY,
+  name character varying(32) NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS public.relations
+-- Таблица людей
+CREATE TABLE people
 (
-    person_id integer,
-    relative_id integer,
-    relation_type_id integer NOT NULL,
-    PRIMARY KEY (person_id, relative_id)
+  id          serial PRIMARY KEY,
+  surname     character varying(32) NOT NULL,
+  name        character varying(32) NOT NULL,
+  fathers_name character varying(32),
+  citizenship integer NOT NULL
+  CONSTRAINT fk_people_citizenship
+  REFERENCES countries (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION
 );
 
-CREATE TABLE IF NOT EXISTS public.relation_types
+-- Таблица типов родственных отношений
+CREATE TABLE relation_types
 (
-    id serial,
-    relation_type character varying(64) NOT NULL,
-    relation_priority integer NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (relation_type)
+  id                serial PRIMARY KEY,
+  relation_type     character varying(64) NOT NULL UNIQUE,
+  relation_priority integer NOT NULL
+  CONSTRAINT chk_relation_priority_positive CHECK (relation_priority > 0)
 );
 
-CREATE TABLE IF NOT EXISTS public.properties
+-- Таблица родственных связей
+CREATE TABLE relations
 (
-    id serial,
-    person_id integer NOT NULL,
-    property character varying(64) NOT NULL,
-    movable boolean NOT NULL DEFAULT false,
-    PRIMARY KEY (id)
+  person_id        integer NOT NULL,
+  relative_id      integer NOT NULL,
+  relation_type_id integer NOT NULL,
+  PRIMARY KEY (person_id, relative_id),
+  CONSTRAINT fk_relations_person
+  FOREIGN KEY (person_id)
+  REFERENCES people (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  CONSTRAINT fk_relations_relative
+  FOREIGN KEY (relative_id)
+  REFERENCES people (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  CONSTRAINT fk_relations_type
+  FOREIGN KEY (relation_type_id)
+  REFERENCES relation_types (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  CONSTRAINT chk_relations_not_self
+  CHECK (person_id <> relative_id)
 );
 
-CREATE TABLE IF NOT EXISTS public.will_entries
+-- Таблица имущества
+CREATE TABLE properties
 (
-    id serial,
-    will_id integer NOT NULL,
-    heir_id integer,
-    property_id integer NOT NULL,
-    description character varying(4096),
-    PRIMARY KEY (id),
-    UNIQUE (will_id, heir_id, property_id)
+  id        serial PRIMARY KEY,
+  person_id integer NOT NULL
+  CONSTRAINT fk_properties_person
+  REFERENCES people (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  property  character varying(64) NOT NULL,
+  movable   boolean NOT NULL DEFAULT false
 );
 
-CREATE TABLE IF NOT EXISTS public.wills
+-- Таблица завещаний
+CREATE TABLE wills
 (
-    id serial,
-    person_id integer NOT NULL,
-    description character varying(4096),
-    PRIMARY KEY (id)
+  id          serial PRIMARY KEY,
+  person_id   integer NOT NULL
+  CONSTRAINT fk_wills_person
+  REFERENCES people (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  description character varying(4096)
 );
 
-CREATE TABLE IF NOT EXISTS public.countries
+-- Таблица пунктов завещания
+CREATE TABLE will_entries
 (
-    id serial,
-    name character varying(32) NOT NULL,
-    PRIMARY KEY (id),
-    UNIQUE (name)
+  id          serial PRIMARY KEY,
+  will_id     integer NOT NULL
+  CONSTRAINT fk_will_entries_will
+  REFERENCES wills (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  heir_id     integer
+  CONSTRAINT fk_will_entries_heir
+  REFERENCES people (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  property_id integer NOT NULL
+  CONSTRAINT fk_will_entries_property
+  REFERENCES properties (id)
+  ON UPDATE NO ACTION
+  ON DELETE NO ACTION,
+  description character varying(4096),
+  UNIQUE (will_id, heir_id, property_id)
 );
-
-ALTER TABLE IF EXISTS public.people
-    ADD FOREIGN KEY (citizenship)
-    REFERENCES public.countries (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.relations
-    ADD FOREIGN KEY (relation_type_id)
-    REFERENCES public.relation_types (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.relations
-    ADD FOREIGN KEY (person_id)
-    REFERENCES public.people (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.relations
-    ADD FOREIGN KEY (relative_id)
-    REFERENCES public.people (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.properties
-    ADD FOREIGN KEY (person_id)
-    REFERENCES public.people (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.will_entries
-    ADD FOREIGN KEY (will_id)
-    REFERENCES public.wills (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.will_entries
-    ADD FOREIGN KEY (heir_id)
-    REFERENCES public.people (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.will_entries
-    ADD FOREIGN KEY (property_id)
-    REFERENCES public.properties (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS public.wills
-    ADD FOREIGN KEY (person_id)
-    REFERENCES public.people (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
