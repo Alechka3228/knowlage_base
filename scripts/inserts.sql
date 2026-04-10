@@ -1,12 +1,12 @@
 -- Заполнение таблицы countries
-INSERT INTO public.countries (id, name) VALUES
+INSERT INTO countries (id, name) VALUES
 (1, 'Россия'),
 (2, 'США'),
 (3, 'Германия')
 ON CONFLICT (id) DO NOTHING;
 
 -- Заполнение таблицы relation_types
-INSERT INTO public.relation_types (id, relation_type, relation_priority) VALUES
+INSERT INTO relation_types (id, relation_type, relation_priority) VALUES
 (1, 'супруг(а)', 1),
 (2, 'родитель', 3),
 (3, 'ребенок', 2),
@@ -14,7 +14,7 @@ INSERT INTO public.relation_types (id, relation_type, relation_priority) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Заполнение таблицы people
-INSERT INTO public.people (id, surname, name, fathers_name, citizenship) VALUES
+INSERT INTO people (id, surname, name, fathers_name, citizenship) VALUES
 (1, 'Иванов', 'Иван', 'Иванович', 1),
 (2, 'Иванова', 'Мария', 'Петровна', 1),
 (3, 'Иванов', 'Алексей', 'Иванович', 1),
@@ -24,7 +24,7 @@ INSERT INTO public.people (id, surname, name, fathers_name, citizenship) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Заполнение таблицы relations (семейные связи)
-INSERT INTO public.relations (person_id, relative_id, relation_type_id) VALUES
+INSERT INTO relations (person_id, relative_id, relation_type_id) VALUES
 -- Супруги
 (1, 2, 1),
 -- Родители-дети (person_id - родитель, relative_id - ребенок)
@@ -45,7 +45,7 @@ INSERT INTO public.relations (person_id, relative_id, relation_type_id) VALUES
 ON CONFLICT (person_id, relative_id) DO NOTHING;
 
 -- Заполнение таблицы properties (имущество)
-INSERT INTO public.properties (id, person_id, property, movable) VALUES
+INSERT INTO properties (id, person_id, property, movable) VALUES
 (1, 1, 'Квартира (3-комнатная, Москва)', false),
 (2, 1, 'Автомобиль Toyota Camry', true),
 (3, 2, 'Дача (6 соток, Подмосковье)', false),
@@ -55,21 +55,21 @@ INSERT INTO public.properties (id, person_id, property, movable) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Заполнение таблицы wills (завещания)
-INSERT INTO public.wills (id, person_id, description) VALUES
+INSERT INTO wills (id, person_id, description) VALUES
 (1, 1, 'Завещание Ивана Ивановича: распределить всё имущество между детьми.')
 ON CONFLICT (id) DO NOTHING;
 
 -- Заполнение таблицы will_entries (распределение имущества по завещанию)
-INSERT INTO public.will_entries (id, will_id, heir_id, property_id, description) VALUES
+INSERT INTO will_entries (id, will_id, heir_id, property_id, description) VALUES
 (1, 1, 3, 1, 'Квартира переходит сыну Алексею'),
 (2, 1, 4, 2, 'Автомобиль переходит дочери Екатерине'),
 (3, 1, 4, 6, 'Денежный вклад переходит дочери Екатерине')
 ON CONFLICT (will_id, heir_id, property_id) DO NOTHING;
 
 -- Сброс последовательностей, чтобы следующие вставки продолжали с максимального id
-SELECT setval('public.people_id_seq', COALESCE((SELECT MAX(id) FROM public.people), 1));
-SELECT setval('public.relation_types_id_seq', COALESCE((SELECT MAX(id) FROM public.relation_types), 1));
-SELECT setval('public.properties_id_seq', COALESCE((SELECT MAX(id) FROM public.properties), 1));
-SELECT setval('public.wills_id_seq', COALESCE((SELECT MAX(id) FROM public.wills), 1));
-SELECT setval('public.will_entries_id_seq', COALESCE((SELECT MAX(id) FROM public.will_entries), 1));
-SELECT setval('public.countries_id_seq', COALESCE((SELECT MAX(id) FROM public.countries), 1));
+SELECT setval('people_id_seq', COALESCE((SELECT MAX(id) FROM people), 1));
+SELECT setval('relation_types_id_seq', COALESCE((SELECT MAX(id) FROM relation_types), 1));
+SELECT setval('properties_id_seq', COALESCE((SELECT MAX(id) FROM properties), 1));
+SELECT setval('wills_id_seq', COALESCE((SELECT MAX(id) FROM wills), 1));
+SELECT setval('will_entries_id_seq', COALESCE((SELECT MAX(id) FROM will_entries), 1));
+SELECT setval('countries_id_seq', COALESCE((SELECT MAX(id) FROM countries), 1));
