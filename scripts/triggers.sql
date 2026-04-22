@@ -29,19 +29,19 @@ CREATE OR REPLACE TRIGGER tr_affiliation
 BEFORE INSERT ON will_entries
 FOR EACH ROW EXECUTE PROCEDURE chk_affiliation_of_property();
 
-  -- Имеет ли смысл завещание, если удалили имущество
-  -- После удаления пункта завещания, если у завещания не осталось ни одного пункта – удаляем само завещание
-  CREATE OR REPLACE FUNCTION chk_meaninglessness_of_will()
-  RETURNS TRIGGER AS $$
-  BEGIN
-    -- Если после удаления для данного will_id не осталось записей в will_entries
-    IF NOT EXISTS (SELECT 1 FROM will_entries WHERE will_id = OLD.will_id) THEN
-      DELETE FROM wills WHERE id = OLD.will_id;
-    END IF;
-    RETURN OLD;
-  END;
-  $$ LANGUAGE plpgsql;
+-- Имеет ли смысл завещание, если удалили имущество
+-- После удаления пункта завещания, если у завещания не осталось ни одного пункта – удаляем само завещание
+CREATE OR REPLACE FUNCTION chk_meaninglessness_of_will()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Если после удаления для данного will_id не осталось записей в will_entries
+  IF NOT EXISTS (SELECT 1 FROM will_entries WHERE will_id = OLD.will_id) THEN
+    DELETE FROM wills WHERE id = OLD.will_id;
+  END IF;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
 
-  CREATE OR REPLACE TRIGGER tr_meaninglessness
-  AFTER DELETE ON will_entries
-  FOR EACH ROW EXECUTE PROCEDURE chk_meaninglessness_of_will();
+CREATE OR REPLACE TRIGGER tr_meaninglessness
+AFTER DELETE ON will_entries
+FOR EACH ROW EXECUTE PROCEDURE chk_meaninglessness_of_will();
